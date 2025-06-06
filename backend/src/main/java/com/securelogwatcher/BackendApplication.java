@@ -1,4 +1,4 @@
-package com.smil98.securelogwatcher.backend;
+package com.securelogwatcher;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,4 +1,4 @@
-package com.smil98.securelogwatcher.backend;
+package com.securelogwatcher;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
