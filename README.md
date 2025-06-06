@@ -54,12 +54,12 @@ securelog-watcher/
 - JWT 인증 기반 사용자 접근 제어
 
 ## API 명세서
-- [인증 API](##인증-api)
-- [사용자 API](##사용자-api)
-- [로그 API](##로그-api)
-- [통계 API](##통계-api)
-## 인증/인가 관련
+- [인증 API](#인증-api)
+- [사용자 API](#사용자-api)
+- [로그 API](#로그-api)
+- [통계 API](#통계-api)
 
+## 인증/인가 관련
 ### 1. 로그인
 
 | 항목         | 설명                                            |
@@ -69,8 +69,8 @@ securelog-watcher/
 | **요청 바디**  | `{ "username": "admin", "password": "1234" }` |
 | **응답**     | `{ "token": "JWT_TOKEN_HERE" }`               |
 | **설명**     | 로그인 성공 시 JWT 토큰 발급                            |
-## 사용자 관련
 
+## 사용자 관련
 ### 회원가입
 
 | 항목         | 설명                                                             |
@@ -80,6 +80,7 @@ securelog-watcher/
 | **요청 바디**  | `{ "username": "admin", "password": "1234", "role": "ADMIN" }` |
 | **응답**     | `{ "id": 1, "username": "admin" }`                             |
 | **설명**     | 관리자 계정이 일반 사용자 등록 가능                                           |
+
 ### 사용자 목록 조회 (관리자 Only)
 
 | 항목         | 설명                                                      |
@@ -89,8 +90,8 @@ securelog-watcher/
 | **헤더**     | `Authorization: Bearer JWT_TOKEN`                       |
 | **응답**     | `[ { "id": 1, "username": "admin", "role": "ADMIN" } ]` |
 | **설명**     | 사용자 전체 목록 조회                                            |
-## 로그 관련
 
+## 로그 관련
 ### 로그 전체 조회
 
 | 항목         | 설명                                                                                                 |
@@ -100,6 +101,7 @@ securelog-watcher/
 | **헤더**     | `Authorization: Bearer JWT_TOKEN`                                                                  |
 | **응답**     | `[ { "id": 101, "type": "LOGIN_FAIL", "message": "로그인 실패", "timestamp": "2025-06-05T09:30:00" } ]` |
 | **설명**     | 수집된 로그 전체 조회 (페이징은 선택)                                                                             |
+
 ### 특정 로그 상세 조회
 
 | 항목         | 설명                                |
@@ -111,7 +113,6 @@ securelog-watcher/
 | **설명**     | 메시지 내 특정 키워드를 포함하는 로그 검색          |
 
 ## 통계/시각화 관련
-
 ### 일별 공격 시도 통계
 
 | 항목         | 설명                                           |
