@@ -14,12 +14,12 @@ public class TestController {
         this.userRepository = userRepository;
     }
 
-    @GetMapping("/save")
-    public String saveUser() {
-        User user = new User("TestUser");
-        userRepository.save(user);
-        return "User saved with ID: " + user.getId();
-    }
+    // @GetMapping("/save")
+    // public String saveUser() {
+    // User user = new User("TestUser");
+    // userRepository.save(user);
+    // return "User saved with ID: " + user.getId();
+    // }
 
     @PostMapping("/user")
     public User createUser(@RequestBody User user) {
