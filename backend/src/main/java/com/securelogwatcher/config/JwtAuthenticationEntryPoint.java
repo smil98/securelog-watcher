@@ -1,4 +1,4 @@
-package main.java.com.securelogwatcher.security;
+package com.securelogwatcher.config;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

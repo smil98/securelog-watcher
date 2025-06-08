@@ -6,12 +6,17 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import main.java.com.securelogwatcher.exception.CustomAuthenticationException;
+import com.securelogwatcher.exception.CustomAuthenticationException;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.io.Decoders;
+import javax.crypto.SecretKey;
 
 import java.security.Key;
 import java.util.*;
@@ -49,6 +54,17 @@ public class JwtTokenProvider {
                 .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public String getUsername(String token) {
+        SecretKey secret = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
+
+        return Jwts.parserBuilder()
+                .setSigningKey(secret)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 
     // get authentication from token

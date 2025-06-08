@@ -1,4 +1,4 @@
-package main.java.com.securelogwatcher.exception;
+package com.securelogwatcher.exception;
 
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
