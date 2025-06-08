@@ -16,6 +16,7 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = "password") // for security reasons, exclude password from toString
 @Table(name = "users")
 public class User {
     @Id
@@ -25,14 +26,14 @@ public class User {
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
+    @Column(nullable = false)
+    private String password;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private Set<Role> roles;
-
-    @Column(nullable = false)
-    private boolean enabled;
 
     // MFA 관련 필드
     @Enumerated(EnumType.STRING)
@@ -40,17 +41,30 @@ public class User {
     private MfaType mfaType; // NONE, EMAIL, TOTP
 
     @Column
-    private String emailForMfa; // 이메일 OTP용
+    private String emailForMfa; // for email OTP
 
     @Column
-    private String totpSecret; // Google Authenticator 연동용 시크릿
+    private String totpSecret; // for Google Authenticator
 
     @Column(nullable = false)
-    private boolean mfaVerified; // 로그인 중 MFA 인증 완료 여부
+    private boolean mfaVerified; // for MFA
 
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Column(nullable = false)
+    private boolean enabled; // eligible for login
+
+    @Column(nullable = false)
+    private boolean deleted = false; // whether the account is deleted
+
+    @Column(nullable = false)
+    private boolean forceLoggedOut = false; // whether the user is forced to log out (admin action)
+
+    public boolean isActive() {
+        return enabled && !deleted && !forceLoggedOut;
+    }
 }

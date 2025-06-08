@@ -1,0 +1,62 @@
+package main.java.com.securelogwatcher.security;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import main.java.com.securelogwatcher.exception.CustomAuthenticationException;
+
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.securelogwatcher.security.JwtTokenProvider;
+
+import java.io.IOException;
+
+@Component
+@RequiredArgsConstructor
+public class JwtAuthenticationFilter implements OncePerRequestFilter {
+
+    private final JwtTokenProvider jwtTokenProvider;
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
+        try {
+            String token = jwtTokenProvider.resolveToken(request);
+
+            if (token != null && jwtTokenProvider.validateToken(token)) {
+                Authentication authentication = jwtTokenProvider.getAuthentication(token);
+
+                // Saving IP, Session ID in authentication details
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                // Log data transfer structure +@Python
+                String ip = request.getRemoteAddr();
+                String sessionId = request.getSession(false) != null ? request.getSession(false).getId() : "N/A";
+                String username = authentication.getName();
+
+                System.out.printf("[AUDIT] Login success | User: %s | IP: %s | SessionID: %s%n", username, ip,
+                        sessionId);
+                // ↳ This part goes into file/queue/db +@Python
+
+            }
+        } catch (CustomAuthenticationException e) {
+            // preventing brute force attacks if authentication fails
+            System.err.println("[SECURITY] Authentication failed: " + e.getMessage());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+            return;
+        } catch (Exception e) {
+            // other unexpected errors
+            System.err.println("[SECURITY] Unknown error during authentication: " + e.getMessage());
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal authentication error");
+            return;
+        }
+        filterChain.doFilter(request, response);
+    }
+}

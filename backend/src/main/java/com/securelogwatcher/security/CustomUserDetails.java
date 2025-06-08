@@ -27,7 +27,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getPassword() {
-        return null; // 비밀번호는 사용하지 않음
+        return null; // no password is stored in this class for security reasons
     }
 
     @Override
@@ -37,17 +37,17 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // 계정 만료 여부는 사용하지 않음
+        return true; // no account expiration is used in this implementation
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // 계정 잠금 여부는 사용하지 않음
+        return true; // no account lock is used in this implementation
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // 자격 증명 만료 여부는 사용하지 않음
+        return true; // no credentials expiration is used in this implementation
     }
 
     @Override
