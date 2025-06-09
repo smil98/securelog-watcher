@@ -25,10 +25,10 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class JwtTokenProvider {
-    @Value("${JWT_SECRET_KEY}")
+    @Value("${jwt.secret}")
     private String secretKey;
 
-    @Value("${JWT_EXPRIATION_TIME}")
+    @Value("${jwt.expiration}")
     private long validityInMilliseconds;
 
     private Key key;

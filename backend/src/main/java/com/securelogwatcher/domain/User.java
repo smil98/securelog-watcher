@@ -29,6 +29,9 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false, unique = true, length = 100)
+    private String email;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
@@ -58,9 +61,11 @@ public class User {
     @Column(nullable = false)
     private boolean enabled; // eligible for login
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean deleted = false; // whether the account is deleted
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean forceLoggedOut = false; // whether the user is forced to log out (admin action)
 
