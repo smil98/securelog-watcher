@@ -1,6 +1,5 @@
 package com.securelogwatcher.domain;
 
-import com.securelogwatcher.domain.Role;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -8,7 +7,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
-import java.util.Set;
 
 @Entity
 @Getter
@@ -32,13 +30,11 @@ public class User {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
-    @Column(name = "role")
-    private Set<Role> roles;
+    @Column(nullable = false)
+    private Role roles;
 
-    // MFA 관련 필드
+    // MFA
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MfaType mfaType; // NONE, EMAIL, TOTP

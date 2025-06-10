@@ -4,9 +4,11 @@ import com.securelogwatcher.domain.User;
 import com.securelogwatcher.domain.Role;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -20,9 +22,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return user.getRoles().stream()
-                .map(role -> (GrantedAuthority) () -> role.name())
-                .collect(Collectors.toSet());
+        return Collections.singletonList(user.getRoles());
     }
 
     @Override

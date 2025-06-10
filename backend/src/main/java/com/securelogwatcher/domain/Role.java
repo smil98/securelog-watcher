@@ -1,9 +1,16 @@
 package com.securelogwatcher.domain;
 
-public enum Role {
+import org.springframework.security.core.GrantedAuthority;
+
+public enum Role implements GrantedAuthority {
     ROLE_USER,
     ROLE_ADMIN,
     ROLE_AUDITOR,
     ROLE_SECURITY_MANAGER,
-    ROLE_SUPER_ADMIN
+    ROLE_SUPER_ADMIN;
+
+    @Override
+    public String getAuthority() {
+        return name();
+    }
 }
