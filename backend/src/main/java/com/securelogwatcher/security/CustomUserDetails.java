@@ -1,6 +1,7 @@
 package com.securelogwatcher.security;
 
 import com.securelogwatcher.domain.User;
+import com.securelogwatcher.domain.MfaType;
 import com.securelogwatcher.domain.Role;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
@@ -22,12 +23,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(user.getRoles());
-    }
-
-    @Override
-    public String getPassword() {
-        return null; // no password is stored in this class for security reasons
+        return Collections.singletonList(user.getRole());
     }
 
     @Override
@@ -36,23 +32,32 @@ public class CustomUserDetails implements UserDetails {
     }
 
     @Override
-    public boolean isAccountNonExpired() {
-        return true; // no account expiration is used in this implementation
+    public String getPassword() {
+        return user.getPassword();
     }
 
-    @Override
-    public boolean isAccountNonLocked() {
-        return true; // no account lock is used in this implementation
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true; // no credentials expiration is used in this implementation
+    public MfaType getMfaType() {
+        return user.getMfaType();
     }
 
     @Override
     public boolean isEnabled() {
-        return user.isEnabled();
+        return user.isActive(); // enabled && !deleted && !forceLoggedOut
     }
 
+    // Not used is all set as true
+    @Override
+    public boolean isAccountNonExpired() {
+        return true; // account expiration not used
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true; // no lock options
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true; // credential expiration does not exist
+    }
 }

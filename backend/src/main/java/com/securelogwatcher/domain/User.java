@@ -32,15 +32,12 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role roles;
+    private Role role;
 
     // MFA
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MfaType mfaType; // NONE, EMAIL, TOTP
-
-    @Column
-    private String emailForMfa; // for email OTP
 
     @Column
     private String totpSecret; // for Google Authenticator
@@ -55,15 +52,15 @@ public class User {
     private LocalDateTime updatedAt;
 
     @Column(nullable = false)
-    private boolean enabled; // eligible for login
-
     @Builder.Default
-    @Column(nullable = false)
     private boolean deleted = false; // whether the account is deleted
 
-    @Builder.Default
     @Column(nullable = false)
+    @Builder.Default
     private boolean forceLoggedOut = false; // whether the user is forced to log out (admin action)
+
+    @Column(nullable = false)
+    private boolean enabled; // eligible for login
 
     public boolean isActive() {
         return enabled && !deleted && !forceLoggedOut;

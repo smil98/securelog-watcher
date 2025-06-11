@@ -1,0 +1,10 @@
+package com.securelogwatcher.mfa.strategy;
+
+import com.securelogwatcher.domain.MfaType;
+import com.securelogwatcher.domain.User;
+
+public interface MfaVerificationStrategy {
+    MfaType getMfaType();
+
+    boolean verify(User user, String code);
+}

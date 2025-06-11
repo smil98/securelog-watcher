@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.securelogwatcher.dto.ApiResponseDto;
+import com.securelogwatcher.mfa.MfaVerificationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -24,6 +25,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponseDto<String>> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
                 new ApiResponseDto<>(false, ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(CustomAuthenticationException.class)
+    public ResponseEntity<ApiResponseDto<String>> handleAuthenticationFail(CustomAuthenticationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponseDto<>(false, ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(MfaVerificationException.class)
+    public ResponseEntity<ApiResponseDto<String>> handleMfaAuthenticationFail(MfaVerificationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponseDto<>(false, ex.getMessage(), null));
     }
 
     @ExceptionHandler(Exception.class)

@@ -28,8 +28,11 @@ public class JwtTokenProvider {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    @Value("${jwt.expiration}")
-    private long validityInMilliseconds;
+    @Value("${jwt.access-expiration}")
+    private long accessTokenValidity;
+
+    @Value("${jwt.refresh-expiration}")
+    private long refreshTokenValidity;
 
     private Key key;
     private final CustomUserDetailsService customUserDetailsService;
@@ -41,12 +44,9 @@ public class JwtTokenProvider {
     }
 
     // Create Token
-    public String createToken(String username, Set<Role> roles) {
-        Claims claims = Jwts.claims().setSubject(username);
-        claims.put("roles", roles.stream().map(Enum::name).collect(Collectors.toSet()));
-
+    private String generateToken(Claims claims, long validityInMs) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + validityInMilliseconds);
+        Date validity = new Date(now.getTime() + validityInMs);
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -54,6 +54,25 @@ public class JwtTokenProvider {
                 .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public String createAccessToken(Authentication authentication) {
+        String username = authentication.getName();
+        Role role = ((CustomUserDetails) authentication.getPrincipal()).getUser().getRole();
+
+        Claims claims = Jwts.claims().setSubject(username);
+        claims.put("roles", role);
+
+        return generateToken(claims, accessTokenValidity);
+    }
+
+    public String createRefreshToken(Authentication authentication) {
+        String username = authentication.getName();
+
+        Claims claims = Jwts.claims().setSubject(username);
+        claims.put("tokenType", "refresh");
+
+        return generateToken(claims, refreshTokenValidity);
     }
 
     public String getUsername(String token) {

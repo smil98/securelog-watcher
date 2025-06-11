@@ -41,16 +41,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                // TODO: Log data transfer structure Python
-                String ip = request.getRemoteAddr();
-                String sessionId = request.getSession(false) != null ? request.getSession(false).getId() : "N/A";
-                String username = authentication.getName();
-
-                System.out.printf("[AUDIT] Login success | User: %s | IP: %s | SessionID: %s%n", username, ip,
-                        sessionId);
-                // TODO: This part goes into file/queue/db
-
             }
         } catch (CustomAuthenticationException e) {
             // preventing brute force attacks if authentication fails
