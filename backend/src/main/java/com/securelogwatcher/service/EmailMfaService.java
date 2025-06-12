@@ -1,9 +1,9 @@
-package com.securelogwatcher.mfa.strategy;
+package com.securelogwatcher.service;
 
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 import org.springframework.mail.SimpleMailMessage;
@@ -11,7 +11,8 @@ import org.springframework.mail.SimpleMailMessage;
 import com.securelogwatcher.domain.MfaType;
 import com.securelogwatcher.domain.User;
 import com.securelogwatcher.domain.VerificationCode;
-import com.securelogwatcher.mfa.MfaVerificationException;
+import com.securelogwatcher.exception.MfaVerificationException;
+import com.securelogwatcher.mfa.MfaVerificationStrategy;
 import com.securelogwatcher.repository.VerificationCodeRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -80,7 +81,7 @@ public class EmailMfaService implements MfaVerificationStrategy {
         return String.valueOf(code);
     }
 
-    private LocalDateTime expirationTime() {
-        return LocalDateTime.now().plusMinutes(10); // 10min
+    private Instant expirationTime() {
+        return Instant.now().plusSeconds(600); // 10min
     }
 }

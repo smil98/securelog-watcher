@@ -6,8 +6,6 @@ import com.securelogwatcher.dto.SignupRequestDto;
 import com.securelogwatcher.service.AuthService;
 
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,8 +21,25 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto) {
+    public ApiResponseDto<?> login(@RequestBody LoginRequestDto loginRequestDto) {
         return authService.authenticateUser(loginRequestDto);
     }
 
+    @PostMapping("/refresh")
+    public ApiResponseDto<?> refreshToken(@RequestHeader("Authorization") String refreshTokenHeader) {
+        if (refreshTokenHeader == null || !refreshTokenHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Refresh token is missing or malformed.");
+        }
+        String refreshTokenString = refreshTokenHeader.substring(7);
+        return authService.refreshToken(refreshTokenString);
+    }
+
+    @PostMapping("/logout")
+    public ApiResponseDto<String> logout(@RequestHeader("Authorization") String refreshTokenHeader) {
+        if (refreshTokenHeader == null || !refreshTokenHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Refresh token is missing or malformed.");
+        }
+        String refreshTokenString = refreshTokenHeader.substring(7);
+        return authService.logout(refreshTokenString);
+    }
 }

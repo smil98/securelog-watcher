@@ -2,7 +2,7 @@ package com.securelogwatcher.domain;
 
 import jakarta.persistence.*; // Use jakarta.persistence for JPA annotations
 import lombok.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "verification_codes") // Optional: define table name
@@ -23,16 +23,16 @@ public class VerificationCode {
     private String code;
 
     @Column(nullable = false)
-    private LocalDateTime expiryTime;
+    private Instant expiryTime;
 
     // Custom constructor for convenience
-    public VerificationCode(Long userId, String code, LocalDateTime expiryTime) {
+    public VerificationCode(Long userId, String code, Instant expiryTime) {
         this.userId = userId;
         this.code = code;
         this.expiryTime = expiryTime;
     }
 
     public boolean isExpired() {
-        return LocalDateTime.now().isAfter(this.expiryTime);
+        return Instant.now().isAfter(this.expiryTime);
     }
 }

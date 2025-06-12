@@ -14,8 +14,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
-import com.securelogwatcher.security.JwtTokenProvider;
-
 import java.io.IOException;
 
 @Component

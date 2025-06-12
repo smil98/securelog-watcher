@@ -1,4 +1,4 @@
-package com.securelogwatcher.mfa.strategy;
+package com.securelogwatcher.mfa;
 
 import com.securelogwatcher.domain.MfaType;
 import com.securelogwatcher.domain.User;

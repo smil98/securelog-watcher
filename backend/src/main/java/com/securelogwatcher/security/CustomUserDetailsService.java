@@ -1,8 +1,6 @@
 package com.securelogwatcher.security;
 
 import com.securelogwatcher.domain.User;
-import com.securelogwatcher.domain.Role;
-import com.securelogwatcher.security.CustomUserDetails;
 import com.securelogwatcher.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 

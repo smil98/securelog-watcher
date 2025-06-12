@@ -14,4 +14,5 @@ import lombok.Setter;
 public class MfaRequiredResponseDto {
     private String username;
     private MfaType mfaType;
+    private String mfaToken;
 }

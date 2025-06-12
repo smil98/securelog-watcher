@@ -1,26 +1,22 @@
 package com.securelogwatcher.security;
 
+import lombok.RequiredArgsConstructor;
 import com.securelogwatcher.domain.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import com.securelogwatcher.exception.CustomAuthenticationException;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.io.Decoders;
-import javax.crypto.SecretKey;
 
 import java.security.Key;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,15 +27,15 @@ public class JwtTokenProvider {
     @Value("${jwt.access-expiration}")
     private long accessTokenValidity;
 
-    @Value("${jwt.refresh-expiration}")
-    private long refreshTokenValidity;
+    @Value("${jwt.mfa-expiration}")
+    private long mfaTokenValidity;
 
     private Key key;
     private final CustomUserDetailsService customUserDetailsService;
 
     @PostConstruct
     protected void init() {
-        byte[] keyBytes = secretKey.getBytes();
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -66,20 +62,19 @@ public class JwtTokenProvider {
         return generateToken(claims, accessTokenValidity);
     }
 
-    public String createRefreshToken(Authentication authentication) {
+    public String createMfaToken(Authentication authentication) {
         String username = authentication.getName();
 
         Claims claims = Jwts.claims().setSubject(username);
-        claims.put("tokenType", "refresh");
+        claims.put("tokenType", "mfa_challenge");
+        claims.put("mfaType", ((CustomUserDetails) authentication.getPrincipal()).getMfaType().name());
 
-        return generateToken(claims, refreshTokenValidity);
+        return generateToken(claims, mfaTokenValidity);
     }
 
     public String getUsername(String token) {
-        SecretKey secret = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
-
         return Jwts.parserBuilder()
-                .setSigningKey(secret)
+                .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
@@ -131,4 +126,5 @@ public class JwtTokenProvider {
         }
         return null;
     }
+
 }

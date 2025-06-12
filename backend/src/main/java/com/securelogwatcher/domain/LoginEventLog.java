@@ -1,6 +1,6 @@
 package com.securelogwatcher.domain;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -27,5 +27,5 @@ public class LoginEventLog {
     private boolean success;
     private String ip;
     private String userAgent;
-    private LocalDateTime timestamp;
+    private Instant timestamp;
 }
