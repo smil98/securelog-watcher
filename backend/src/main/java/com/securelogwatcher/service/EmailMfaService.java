@@ -3,9 +3,12 @@ package com.securelogwatcher.service;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 
 import com.securelogwatcher.domain.MfaType;
@@ -23,6 +26,12 @@ public class EmailMfaService implements MfaVerificationStrategy {
 
     private final JavaMailSender mailSender;
     private final VerificationCodeRepository verificationCodeRepository;
+    private final LoginAttemptService loginAttemptService;
+
+    @Value("${spring.mail.username}")
+    private String senderEmail;
+    @Value("${spring.email.code-validity-seconds:900}")
+    private long codeValiditySeconds;
 
     @Override
     public MfaType getMfaType() {
@@ -40,12 +49,21 @@ public class EmailMfaService implements MfaVerificationStrategy {
 
         // 3. Email sending
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(user.getEmail()); // Ensure user.getEmail() returns the user's email address
+        message.setTo(user.getEmail());
         message.setSubject("Your MFA Verification Code");
-        message.setText("Your verification code is: " + code + ". This code is valid for 10 minutes.");
-        // message.setFrom("your_email@example.com"); // Consider setting a 'from'
-        // address
-        mailSender.send(message);
+        message.setText("Your verification code is: " + code + ". This code is valid for " + (codeValiditySeconds / 60)
+                + " minutes.");
+        message.setFrom(senderEmail);
+
+        // Sending email
+        try {
+            mailSender.send(message);
+            loginAttemptService.resetEmailSendAttempts(user.getUsername());
+        } catch (MailException e) {
+            loginAttemptService.recordEmailSendAttempt(user.getUsername());
+            System.err.println("Failed to send verification email to " + user.getEmail() + ": " + e.getMessage());
+            throw new MfaVerificationException("Failed to send verification email. Please try again later");
+        }
     }
 
     @Override
@@ -70,6 +88,9 @@ public class EmailMfaService implements MfaVerificationStrategy {
         // Delete code after successful verification to prevent reuse
         if (isValid) {
             verificationCodeRepository.delete(stored);
+            loginAttemptService.resetEmailSendAttempts(user.getUsername());
+        } else {
+            throw new MfaVerificationException("Invalid verification code."); // Specific error message for client
         }
 
         return isValid; // Return the actual verification result
@@ -77,11 +98,12 @@ public class EmailMfaService implements MfaVerificationStrategy {
 
     private String generateRandomCode() {
         // 6 digit random
-        int code = (int) (Math.random() * 900000) + 100000;
+        SecureRandom secureRandom = new SecureRandom();
+        int code = secureRandom.nextInt(900000) + 100000;
         return String.valueOf(code);
     }
 
     private Instant expirationTime() {
-        return Instant.now().plusSeconds(600); // 10min
+        return Instant.now().plusSeconds(codeValiditySeconds);
     }
 }

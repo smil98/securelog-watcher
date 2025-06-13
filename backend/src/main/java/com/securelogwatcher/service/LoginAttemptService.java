@@ -14,6 +14,7 @@ import lombok.Getter;
 @Getter
 public class LoginAttemptService {
     private final Cache<String, Integer> attemptsCache;
+    private final Cache<String, Integer> emailSendAttemptsCache;
 
     @Value("${security.login-attempts.max-attempts}")
     private int MAX_ATTEMPTS;
@@ -24,6 +25,9 @@ public class LoginAttemptService {
     // Initializing cache with expiration based on the block duration
     public LoginAttemptService() {
         this.attemptsCache = Caffeine.newBuilder()
+                .expireAfterWrite(BLOCK_DURATION_MINUTES, TimeUnit.MINUTES)
+                .build();
+        this.emailSendAttemptsCache = Caffeine.newBuilder()
                 .expireAfterWrite(BLOCK_DURATION_MINUTES, TimeUnit.MINUTES)
                 .build();
     }
@@ -43,4 +47,18 @@ public class LoginAttemptService {
         return attempts != null && attempts >= MAX_ATTEMPTS;
     }
 
+    public void recordEmailSendAttempt(String username) {
+        int attempts = emailSendAttemptsCache.get(username, k -> 0);
+        attempts++;
+        emailSendAttemptsCache.put(username, attempts);
+    }
+
+    public boolean isEmailSendBlocked(String username) {
+        Integer attempts = emailSendAttemptsCache.getIfPresent(username);
+        return attempts != null && attempts >= MAX_ATTEMPTS;
+    }
+
+    public void resetEmailSendAttempts(String username) {
+        emailSendAttemptsCache.invalidate(username);
+    }
 }
