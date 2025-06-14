@@ -56,7 +56,8 @@ public class TotpMfaService implements MfaVerificationStrategy {
         return isValid;
     }
 
-    public String generateSecretAndQrUri(User user) {
+    @Override
+    public String initiateEnrollment(User user) {
         String secret = secretGenerator.generate();
         user.setTotpSecret(secret); // Set the secret for the user
         userRepository.save(user); // Save the updated user with the new secret
@@ -80,9 +81,5 @@ public class TotpMfaService implements MfaVerificationStrategy {
         } catch (QrGenerationException e) {
             throw new MfaVerificationException("Failed to generate TOTP QR code: " + e);
         }
-    }
-
-    public String generateNewTotpSecret() {
-        return secretGenerator.generate();
     }
 }

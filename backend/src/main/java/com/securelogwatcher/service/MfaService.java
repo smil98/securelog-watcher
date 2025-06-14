@@ -19,6 +19,7 @@ import com.securelogwatcher.repository.UserRepository;
 import com.securelogwatcher.security.CustomUserDetails;
 import com.securelogwatcher.security.JwtTokenProvider;
 import com.securelogwatcher.exception.MfaVerificationException;
+import com.securelogwatcher.repository.VerificationCodeRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class MfaService {
     private final Map<MfaType, MfaVerificationStrategy> strategyMap = new HashMap<>();
     private final List<MfaVerificationStrategy> strategies;
     private final JwtTokenProvider jwtTokenProvider;
+    private final VerificationCodeRepository verificationCodeRepository;
 
     @PostConstruct
     public void init() {
@@ -61,4 +63,44 @@ public class MfaService {
     public String createMfaToken(Authentication authentication) {
         return jwtTokenProvider.createMfaToken(authentication);
     }
+
+    public String initiateMfaEnrollment(User user, MfaType mfaType) {
+        if (mfaType == MfaType.NONE) {
+            throw new MfaVerificationException("MFA type NONE cannot be enrolled.");
+        }
+
+        MfaVerificationStrategy strategy = strategyMap.get(mfaType);
+        if (strategy == null) {
+            throw new MfaVerificationException("No strategy found for MFA type: " + mfaType);
+        }
+
+        if (user.getMfaType() != MfaType.NONE && user.getMfaType() != mfaType) {
+            disableMfa(user); // Disable previous MFA if user is switching type
+        }
+
+        user.setMfaType(mfaType);
+        userRepository.save(user);
+
+        return strategy.initiateEnrollment(user);
+    }
+
+    public boolean confirmMfaEnrollment(User user, String code) {
+        if (user.getMfaType() == MfaType.NONE) {
+            throw new MfaVerificationException("MFA is not enabled for this user. Please initiate enrollment first.");
+        }
+        return verify(user, code);
+    }
+
+    public void disableMfa(User user) {
+        user.setMfaType(MfaType.NONE);
+
+        // Clear TOTP secret if it exists
+        if (user.getTotpSecret() != null) {
+            user.setTotpSecret(null);
+        }
+        // Delete any associated email verification codes
+        verificationCodeRepository.deleteByUserId(user.getId());
+        userRepository.save(user); // Save the updated user
+    }
+
 }

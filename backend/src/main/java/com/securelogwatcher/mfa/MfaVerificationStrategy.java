@@ -7,4 +7,6 @@ public interface MfaVerificationStrategy {
     MfaType getMfaType();
 
     boolean verify(User user, String code);
+
+    String initiateEnrollment(User user);
 }

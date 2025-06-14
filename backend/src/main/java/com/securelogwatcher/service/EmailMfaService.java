@@ -38,16 +38,25 @@ public class EmailMfaService implements MfaVerificationStrategy {
         return MfaType.EMAIL;
     }
 
-    public void sendVerificationCode(User user) {
+    @Override
+    public String initiateEnrollment(User user) {
+        String username = user.getUsername();
+
+        if (loginAttemptService.isEmailSendBlocked(username)) {
+            throw new MfaVerificationException(
+                    "Email sending is temporarily blocked for this account due to too many recent attempts. Please try again later.");
+        }
+
+        // 1. Genereate code
         String code = generateRandomCode(); // 6 digit code
 
-        // 1. Clean up any existing code for the user
+        // 2. Clean up any existing code for the user
         verificationCodeRepository.deleteByUserId(user.getId()); // Important to avoid multiple active codes
 
-        // 2. Save the new code
+        // 3. Save new code
         verificationCodeRepository.save(new VerificationCode(user.getId(), code, expirationTime()));
 
-        // 3. Email sending
+        // 4. Email sending
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(user.getEmail());
         message.setSubject("Your MFA Verification Code");
@@ -55,10 +64,11 @@ public class EmailMfaService implements MfaVerificationStrategy {
                 + " minutes.");
         message.setFrom(senderEmail);
 
-        // Sending email
+        // 5. Sending email
         try {
             mailSender.send(message);
             loginAttemptService.resetEmailSendAttempts(user.getUsername());
+            return "Verification code sent to your email. Please check your inbox.";
         } catch (MailException e) {
             loginAttemptService.recordEmailSendAttempt(user.getUsername());
             System.err.println("Failed to send verification email to " + user.getEmail() + ": " + e.getMessage());
