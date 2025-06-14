@@ -43,6 +43,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponseDto<>(false, ex.getMessage(), null));
     }
 
+    @ExceptionHandler(MfaExpirationException.class)
+    public ResponseEntity<ApiResponseDto<?>> handleMfaExpiration(MfaExpirationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ApiResponseDto<>(false, ex.getMessage(), ex.getMfaToken()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponseDto<String>> handleAllExceptions(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(

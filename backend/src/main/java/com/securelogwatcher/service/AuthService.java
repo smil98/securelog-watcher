@@ -4,6 +4,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
@@ -139,6 +140,20 @@ public class AuthService {
         // 6. Return the new tokens
         return new ApiResponseDto<>(true, "Token refreshed successfully.",
                 new LoginResponseDto(newAccessToken, newRefreshTokenString, user.getUsername()));
+    }
+
+    public ApiResponseDto<?> changePassword(String username, String oldPassword, String newPassword) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found."));
+
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new CustomAuthenticationException("Incorrect old password.");
+        }
+
+        String hashedNewPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(hashedNewPassword);
+        userRepository.save(user);
+        return new ApiResponseDto<>(true, "Password changed successfully", null);
     }
 
     public ApiResponseDto<String> logout(String refreshToken) {

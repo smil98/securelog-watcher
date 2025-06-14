@@ -23,18 +23,20 @@ repositories {
 	mavenCentral()
 }
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'dev.samstevens.totp:totp-spring-boot-starter:1.7.1'
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
 	implementation 'jakarta.servlet:jakarta.servlet-api:6.0.0'
 	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 	implementation 'org.mapstruct:mapstruct:1.6.3'
-	implementation 'org.springframework.boot:spring-boot-starter-mail'
-	implementation 'dev.samstevens.totp:totp-spring-boot-starter:1.7.1'
 	implementation 'dev.samstevens.totp:totp:1.7.1'
 	implementation 'com.github.ben-manes.caffeine:caffeine:3.2.1'
+	implementation 'com.h2database:h2'
 	
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -45,6 +47,8 @@ dependencies {
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'org.mockito:mockito-junit-jupiter'
+	testImplementation 'com.h2database:h2'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

@@ -2,10 +2,14 @@ package com.securelogwatcher.service;
 
 import com.securelogwatcher.domain.User;
 import com.securelogwatcher.exception.CustomAuthenticationException;
+import com.securelogwatcher.exception.MfaExpirationException;
 import com.securelogwatcher.domain.RefreshToken;
 import com.securelogwatcher.repository.RefreshTokenRepository;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -19,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
+    private final MfaService mfaService;
 
     @Value("${jwt.refreshTokenExpirationMinutes}")
     private long refreshTokenExpirationMinutes;
@@ -57,7 +62,10 @@ public class RefreshTokenService {
 
         if (daysSinceLastMfa >= requiredMfaReVerificationDays) {
             refreshTokenRepository.delete(token); // Invalidate the token as MFA re-verification is needed
-            throw new CustomAuthenticationException("MFA re-verification required. Please log in again.");
+            Authentication authentication = mfaService.loadAuthentication(token.getUser().getUsername());
+
+            String mfaToken = mfaService.createMfaToken(authentication);
+            throw new MfaExpirationException("MFA re-verification required.", mfaToken);
         }
 
         return token;
