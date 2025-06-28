@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -32,7 +33,7 @@ public class RefreshTokenService {
     private long mfaReVerificationMonths;
 
     public RefreshToken createRefreshToken(User user) {
-        refreshTokenRepository.deleteByUser(user);
+        refreshTokenRepository.invalidateAllRefreshTokensForUser(user);
 
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
@@ -76,6 +77,6 @@ public class RefreshTokenService {
     }
 
     public void deleteByUser(User user) {
-        refreshTokenRepository.deleteByUser(user);
+        refreshTokenRepository.invalidateAllRefreshTokensForUser(user);
     }
 }

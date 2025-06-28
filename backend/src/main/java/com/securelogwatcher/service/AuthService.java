@@ -1,5 +1,9 @@
 package com.securelogwatcher.service;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -7,10 +11,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.Authentication;
 
 import com.securelogwatcher.domain.User;
 import com.securelogwatcher.domain.MfaType;
+import com.securelogwatcher.domain.PasswordResetToken;
 import com.securelogwatcher.domain.RefreshToken;
 import com.securelogwatcher.domain.Role;
 import com.securelogwatcher.dto.ApiResponseDto;
@@ -25,6 +31,9 @@ import com.securelogwatcher.repository.UserRepository;
 import com.securelogwatcher.security.CustomUserDetails;
 import com.securelogwatcher.security.JwtTokenProvider;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -37,6 +46,20 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final LoginAttemptService loginAttemptService;
     private final MfaService mfaService;
+    private final PasswordResetTokenService passwordResetTokenService;
+    private final AuditLogService auditLogService;
+    private final JavaMailSender mailSender;
+
+    @Value("${spring.mail.username}")
+    private String senderEmail;
+
+    @Value("${security.password-reset-token-expiration}:30")
+    private long expirationTime;
+
+    @Value("${app.frontend.url}") // <--- Recommend injecting frontend URL for the reset link
+    private String frontendUrl;
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class); // Logger instance
 
     public ApiResponseDto<?> registerUser(SignupRequestDto signupRequestDto) {
         if (userRepository.existsByUsername(signupRequestDto.getUsername())) {
@@ -142,18 +165,104 @@ public class AuthService {
                 new LoginResponseDto(newAccessToken, newRefreshTokenString, user.getUsername()));
     }
 
+    @Transactional
     public ApiResponseDto<?> changePassword(String username, String oldPassword, String newPassword) {
+        auditLogService.logPasswordChangeAttempt(username);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found."));
 
-        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new CustomAuthenticationException("Incorrect old password.");
+        try {
+            if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+                throw new CustomAuthenticationException("Incorrect old password.");
+            }
+            String hashedNewPassword = passwordEncoder.encode(newPassword);
+            user.setPassword(hashedNewPassword);
+            userRepository.save(user);
+            refreshTokenService.deleteByUser(user);
+            auditLogService.logPasswordChangeSuccess(user.getUsername());
+            return new ApiResponseDto<>(true, "Password changed successfully", null);
+        } catch (Exception e) {
+            auditLogService.logPasswordChangeFailure(username, e.getMessage());
+            throw e;
+        }
+    }
+
+    @Transactional
+    public ApiResponseDto<?> requestPasswordReset(String email) {
+        auditLogService.logPasswordResetRequest(email);
+
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        try {
+            if (user == null) {
+                logger.warn("Password reset requested for non-existent email: {}", email);
+                return new ApiResponseDto<>(true,
+                        "If an account with that email exists, a password reset link will be sent shortly.", null);
+            }
+
+            PasswordResetToken token = passwordResetTokenService.createToken(user);
+            // sending mail
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(user.getEmail());
+            message.setSubject("SecureLogWatcher: Password Reset Request");
+            message.setText("Dear " + user.getUsername() + ",\n\n" + // Personalize message
+                    "You have requested a password reset. Please use the following link to reset your password:\n\n" +
+                    frontendUrl + "/reset-password?token=" + token.getToken() +
+                    "\n\nThis link is valid for " + expirationTime +
+                    " minutes. If you did not request this, please ignore this email.\n\n" +
+                    "Sincerely,\nYour SecureLogWatcher Team");
+            message.setFrom(senderEmail);
+
+            mailSender.send(message);
+
+            logger.info("Password reset email sent to {} for user {}", email, user.getUsername());
+            return new ApiResponseDto<>(true, "Password reset link has been sent to your email.", null);
+        } catch (MailException e) {
+            logger.error("Failed to send password reset email to {}: {}", email, e.getMessage(), e);
+            return new ApiResponseDto<>(true,
+                    "If an account with that email exists, a password reset link will be sent shortly.", null);
+        } catch (Exception e) {
+            logger.error("Failed to send password reset email to {}: {}", email, e.getMessage(), e);
+            auditLogService.logPasswordResetFailure(email, null, e.getMessage());
+            throw e;
+        }
+    }
+
+    @Transactional
+    public ApiResponseDto<?> resetPassword(String tokenValue, String newPassword) {
+        User user = null;
+
+        try {
+            // 1. Validate the password reset token
+            user = passwordResetTokenService.validateToken(tokenValue);
+
+            // 2. Hash the new password
+            String hashedNewPassword = passwordEncoder.encode(newPassword);
+
+            // 3. Update user's password
+            user.setPassword(hashedNewPassword);
+            userRepository.save(user);
+
+            // 4. Invalidate the used password reset token
+            passwordResetTokenService.deleteToken(passwordResetTokenService.findByToken(tokenValue)
+                    .orElseThrow(
+                            () -> new CustomAuthenticationException(
+                                    "Internal error: Token not found after validation.")));
+
+            // 5. Invalidate all refresh tokens for this user for security
+            refreshTokenService.deleteByUser(user);
+
+            auditLogService.logPasswordResetSuccess(user.getUsername());
+
+            return new ApiResponseDto<>(true,
+                    "Password has been reset successfully. Please log in with your new password.",
+                    null);
+        } catch (Exception e) {
+            String usernameToLog = (user != null) ? user.getUsername() : "UNKNOWN"; // Log username if available
+            auditLogService.logPasswordResetFailure(usernameToLog, tokenValue, e.getMessage());
+            throw e; // Re-throw the original exception
         }
 
-        String hashedNewPassword = passwordEncoder.encode(newPassword);
-        user.setPassword(hashedNewPassword);
-        userRepository.save(user);
-        return new ApiResponseDto<>(true, "Password changed successfully", null);
     }
 
     public ApiResponseDto<String> logout(String refreshToken) {

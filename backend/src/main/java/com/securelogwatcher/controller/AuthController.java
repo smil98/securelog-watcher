@@ -2,10 +2,13 @@ package com.securelogwatcher.controller;
 
 import com.securelogwatcher.dto.ApiResponseDto;
 import com.securelogwatcher.dto.ChangePasswordRequestDto;
+import com.securelogwatcher.dto.ForgotPasswordDto;
 import com.securelogwatcher.dto.LoginRequestDto;
+import com.securelogwatcher.dto.ResetPasswordRequestDto;
 import com.securelogwatcher.dto.SignupRequestDto;
 import com.securelogwatcher.service.AuthService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.core.Authentication;
@@ -41,17 +44,13 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponseDto<?>> forgotPassword(
-            @RequestHeader("Authorization") @RequestBody String entity) {
-        // TODO: process POST request
-
-        return ResponseEntity.ok(new ApiResponseDto<>(true, "", null));
+            @Valid @RequestBody ForgotPasswordDto request) {
+        return ResponseEntity.ok(authService.requestPasswordReset(request.getEmail()));
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponseDto<?>> resetPassword(String entity) {
-        // TODO: process POST request
-
-        return ResponseEntity.ok(new ApiResponseDto<>(true, "", null));
+    public ResponseEntity<ApiResponseDto<?>> resetPassword(@Valid @RequestBody ResetPasswordRequestDto request) {
+        return ResponseEntity.ok(authService.resetPassword(request.getToken(), request.getNewPassword()));
     }
 
     @PostMapping("/change-password")
