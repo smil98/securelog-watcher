@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -33,6 +34,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.authenticateUser(loginRequestDto));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponseDto<?>> refreshToken(@RequestHeader("Authorization") String refreshTokenHeader) {
         if (refreshTokenHeader == null || !refreshTokenHeader.startsWith("Bearer ")) {
@@ -53,6 +55,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.resetPassword(request.getToken(), request.getNewPassword()));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/change-password")
     public ResponseEntity<ApiResponseDto<?>> changePassword(ChangePasswordRequestDto request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -61,6 +64,7 @@ public class AuthController {
         return ResponseEntity.ok(new ApiResponseDto<>(true, "", null));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/logout")
     public ResponseEntity<ApiResponseDto<String>> logout(@RequestHeader("Authorization") String refreshTokenHeader) {
         if (refreshTokenHeader == null || !refreshTokenHeader.startsWith("Bearer ")) {

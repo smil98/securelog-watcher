@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.securelogwatcher.security.CustomUserDetails;
 import com.securelogwatcher.security.JwtTokenProvider;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.securelogwatcher.service.MfaService;
 import com.securelogwatcher.service.RefreshTokenService;
 
@@ -34,6 +35,7 @@ public class MfaController {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/enroll/initiate/{mfaType}")
     public ResponseEntity<ApiResponseDto<?>> initiateMfaEnrollment(@PathVariable MfaType mfaType,
             Authentication authentication) {
@@ -70,6 +72,7 @@ public class MfaController {
         return ResponseEntity.ok(new ApiResponseDto<>(true, "MFA verification complete.", responseDto));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/enroll/confirm")
     public ResponseEntity<ApiResponseDto<?>> confirmMfaEnrollment(
             @Valid @RequestBody MfaVerifyRequestDto request,
@@ -83,6 +86,7 @@ public class MfaController {
                 .ok(new ApiResponseDto<>(true, "MFA enrollment confirmed successfully.", "MFA enabled."));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/disable")
     public ResponseEntity<ApiResponseDto<String>> disableMfa(Authentication authentication) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();

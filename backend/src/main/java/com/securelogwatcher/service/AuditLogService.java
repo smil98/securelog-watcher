@@ -1,6 +1,7 @@
 package com.securelogwatcher.service;
 
 import com.securelogwatcher.domain.AuditLog;
+import com.securelogwatcher.dto.AuditLogDto;
 import com.securelogwatcher.domain.AuditEventType;
 import com.securelogwatcher.repository.AuditLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,7 +12,9 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -90,4 +93,25 @@ public class AuditLogService {
     public void logTokenCleanup(int count, String tokenType) {
         logEvent(AuditEventType.TOKEN_CLEANUP, null, "Cleaned up " + count + " expired " + tokenType + " tokens.");
     }
+
+    public void logUserManagementAction(String actingUsername, String details) {
+        logEvent(AuditEventType.USER_MANAGEMENT, actingUsername, details);
+    }
+
+    public List<AuditLogDto> getAllAuditLogs() {
+
+        List<AuditLog> auditLogs = auditLogRepository.findAll();
+        return auditLogs.stream()
+                .map(log -> AuditLogDto.builder()
+                        .id(log.getId())
+                        .timestamp(log.getTimestamp())
+                        .eventType(log.getEventType())
+                        .username(log.getUsername())
+                        .ipAddress(log.getIpAddress())
+                        .userAgent(log.getUserAgent())
+                        .details(log.getDetails())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 }
