@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  // 이제 토큰을 직접 인자로 받도록 수정합니다.
+  login: (token: string) => Promise<void>; 
   logout: () => void;
   token: string | null;
 }
@@ -24,20 +24,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [token]);
 
-  // login 함수를 email과 password를 인자로 받도록 수정
-  const login = async (email: string, password: string) => {
-    try {
-      // 백엔드 API URL로 직접 로그인 요청
-      const response = await axios.post('http://localhost:8080/api/v1/auth/login', {
-        email,
-        password
-      });
-      const jwtToken = response.data.token;
-      setToken(jwtToken);
-    } catch (error) {
-      console.error('Login failed', error);
-      throw error;
-    }
+  // AuthContext는 토큰 상태 관리만 담당
+  const login = async (jwtToken: string) => {
+    setToken(jwtToken);
   };
 
   const logout = () => {
