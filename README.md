@@ -16,9 +16,6 @@ Spring Boot + React 기반으로 설계되었으며, SIEM의 핵심 원리를 �
 - Frontend: React, TailwindCSS
 - DB / Infra: MySQL, AWS
 
-## 🏗 시스템 아키텍처
-(아키텍처 다이어그램 이미지)
-
 ## ✨ 주요 기능
 - 보안 로그 업로드 및 저장
 - 로그 검색 및 필터링
@@ -31,4 +28,4 @@ Spring Boot + React 기반으로 설계되었으며, SIEM의 핵심 원리를 �
 - 🔐 인증/인가 설계
 - 🛠 트러블슈팅 및 개선 과정
 
-👉 **Notion 링크**
+👉 **[Notion 링크](https://www.notion.so/SecureLog-Watcher-2e1a446b70d0803ab51cfc38751096d4?source=copy_link)**
